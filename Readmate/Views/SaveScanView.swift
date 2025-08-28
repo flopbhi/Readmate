@@ -2,17 +2,18 @@ import SwiftUI
 
 struct SaveScanView: View {
     @EnvironmentObject private var libraryViewModel: LibraryViewModel
+    @EnvironmentObject private var themeManager: ThemeManager
     @Binding var scannedImage: UIImage?
     @State private var documentName: String = "Scanned Document"
 
     var body: some View {
         ZStack {
-            Color.appBackground.edgesIgnoringSafeArea(.all)
+            themeManager.currentTheme.appBackground.edgesIgnoringSafeArea(.all)
 
             VStack {
                 Text("Save Your Scan")
                     .font(.largeTitle).bold()
-                    .gradientText()
+                    .gradientText(for: themeManager.currentTheme)
                     .padding()
                 
                 Image(uiImage: scannedImage ?? UIImage())
@@ -24,9 +25,9 @@ struct SaveScanView: View {
                 TextField("Document Name", text: $documentName)
                     .textFieldStyle(PlainTextFieldStyle())
                     .padding(12)
-                    .background(Color.elementBackground)
+                    .background(themeManager.currentTheme.elementBackground)
                     .cornerRadius(10)
-                    .foregroundColor(.onboardingText)
+                    .foregroundColor(themeManager.currentTheme.secondaryColor)
                     .padding()
                 
                 Button(action: saveScan) {
@@ -34,9 +35,9 @@ struct SaveScanView: View {
                         .font(.headline)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.purpleGradient)
+                        .background(Color.purpleGradient(for: themeManager.currentTheme))
                         .foregroundColor(.white)
-                        .cornerRadius(15)
+                        .cornerRadius(1E+1)
                 }
                 .padding(.horizontal)
 
@@ -57,5 +58,6 @@ struct SaveScanView_Previews: PreviewProvider {
     static var previews: some View {
         SaveScanView(scannedImage: .constant(UIImage(systemName: "doc.text.image")))
             .environmentObject(LibraryViewModel(forPreview: true))
+            .environmentObject(ThemeManager())
     }
 }

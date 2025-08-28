@@ -7,6 +7,10 @@ struct Book: Identifiable, Codable, Equatable {
     let fileName: String
     let fileType: FileType
     var bookmarks: [Int] = [] // Stores the page numbers of bookmarks
+    var readingProgress: Double = 0.0 // Stores the reading progress as a percentage
+    var totalPages: Int = 0 // Stores the total number of pages
+    var folderId: UUID? // The ID of the folder this book belongs to
+    var annotations: [Annotation] = []
 
     enum FileType: String, Codable {
         case pdf

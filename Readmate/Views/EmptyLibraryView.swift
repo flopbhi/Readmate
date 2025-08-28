@@ -1,17 +1,18 @@
 import SwiftUI
 
 struct EmptyLibraryView: View {
+    @EnvironmentObject private var themeManager: ThemeManager
     @Binding var isImporterPresented: Bool
 
     var body: some View {
         VStack(spacing: 20) {
             Text("Your library is empty.")
                 .font(.title2).bold()
-                .foregroundColor(.onboardingText)
+                .foregroundColor(themeManager.currentTheme.secondaryColor)
             
             Text("Tap the button below to import your first book.")
                 .font(.body)
-                .foregroundColor(.authorText)
+                .foregroundColor(themeManager.currentTheme.authorText)
                 .multilineTextAlignment(.center)
             
             Button(action: { isImporterPresented = true }) {
@@ -19,7 +20,7 @@ struct EmptyLibraryView: View {
                     .font(.headline)
                     .padding()
                     .frame(maxWidth: 200)
-                    .background(Color.purpleGradient)
+                    .background(Color.purpleGradient(for: themeManager.currentTheme))
                     .foregroundColor(.white)
                     .cornerRadius(15)
             }
@@ -30,3 +31,9 @@ struct EmptyLibraryView: View {
     }
 }
 
+struct EmptyLibraryView_Previews: PreviewProvider {
+    static var previews: some View {
+        EmptyLibraryView(isImporterPresented: .constant(false))
+            .environmentObject(ThemeManager())
+    }
+}

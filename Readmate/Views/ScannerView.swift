@@ -11,12 +11,13 @@ enum ScanSheet: Identifiable {
 
 struct ScannerView: View {
     @EnvironmentObject private var libraryViewModel: LibraryViewModel
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var activeSheet: ScanSheet?
     @State private var scannedImage: UIImage?
 
     var body: some View {
         ZStack {
-            Color.appBackground.edgesIgnoringSafeArea(.all)
+            themeManager.currentTheme.appBackground.edgesIgnoringSafeArea(.all)
             
             // Floating orbs background effect
             FloatingOrbsView(orbCount: 30, baseSize: 10, baseOpacity: 0.8, speed: 0.3)
@@ -25,11 +26,12 @@ struct ScannerView: View {
             if scannedImage != nil {
                 SaveScanView(scannedImage: $scannedImage)
                     .environmentObject(libraryViewModel)
+                    .environmentObject(themeManager)
             } else {
                 VStack(spacing: 30) {
                     Text("Create a New Scan")
                         .font(.largeTitle).bold()
-                        .gradientText()
+                        .gradientText(for: themeManager.currentTheme)
 
                     Button(action: { self.activeSheet = .scanner }) {
                         HStack {
@@ -39,7 +41,7 @@ struct ScannerView: View {
                         .font(.headline)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.purpleGradient)
+                        .background(Color.purpleGradient(for: themeManager.currentTheme))
                         .foregroundColor(.white)
                         .cornerRadius(15)
                     }
@@ -52,8 +54,8 @@ struct ScannerView: View {
                         .font(.headline)
                         .padding()
                         .frame(maxWidth: .infinity)
-                        .background(Color.elementBackground)
-                        .foregroundColor(.onboardingText)
+                        .background(themeManager.currentTheme.elementBackground)
+                        .foregroundColor(themeManager.currentTheme.secondaryColor)
                         .cornerRadius(15)
                     }
                 }
@@ -81,5 +83,6 @@ struct ScannerView_Previews: PreviewProvider {
     static var previews: some View {
         ScannerView()
             .environmentObject(LibraryViewModel(forPreview: true))
+            .environmentObject(ThemeManager())
     }
 }

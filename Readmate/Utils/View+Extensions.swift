@@ -11,7 +11,7 @@ struct GradientText: ViewModifier {
 }
 
 extension View {
-    func gradientText(gradient: LinearGradient = Color.purpleGradient) -> some View {
-        self.modifier(GradientText(gradient: gradient))
+    func gradientText(for theme: Theme) -> some View {
+        self.modifier(GradientText(gradient: Color.purpleGradient(for: theme)))
     }
 }

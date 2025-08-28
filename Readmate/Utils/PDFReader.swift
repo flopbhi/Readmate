@@ -20,11 +20,14 @@ struct PDFReader: UIViewRepresentable {
     func updateUIView(_ uiView: SelectablePDFView, context: Context) {
         // This is where we react to state changes from SwiftUI
         
-        if let pageNumber = viewModel.pageToGoTo,
-           let page = uiView.document?.page(at: pageNumber - 1) { // Page numbers are 1-based, index is 0-based
+        let targetPageNumber = viewModel.pageToGoTo ?? viewModel.currentPage
+        
+        if let page = uiView.document?.page(at: targetPageNumber - 1) {
             uiView.go(to: page)
-            
-            // Reset the state to nil to prevent re-navigation on other view updates
+        }
+        
+        // Reset the pageToGoTo to prevent re-navigation
+        if viewModel.pageToGoTo != nil {
             DispatchQueue.main.async {
                 viewModel.pageToGoTo = nil
             }

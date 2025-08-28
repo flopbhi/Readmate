@@ -27,10 +27,17 @@ class LibraryViewModel: ObservableObject {
             Persistence.saveBooks(books)
         }
     }
+    @Published var folders: [Folder] {
+        didSet {
+            Persistence.saveFolders(folders)
+        }
+    }
+    @Published var selectedFolder: Folder?
 
     // Main initializer for the live app
     init() {
         self.books = Persistence.loadBooks()
+        self.folders = Persistence.loadFolders()
     }
 
     // A special, fast initializer for Xcode Previews
@@ -40,12 +47,26 @@ class LibraryViewModel: ObservableObject {
                 Book(id: UUID(), title: "The Hobbit (Preview)", author: "J.R.R. Tolkien", fileName: "sample1", fileType: .epub),
                 Book(id: UUID(), title: "A Brief History of Time (Preview)", author: "Stephen Hawking", fileName: "sample2", fileType: .pdf)
             ]
+            self.folders = [
+                Folder(name: "Fantasy"),
+                Folder(name: "Science")
+            ]
         } else {
             self.books = Persistence.loadBooks()
+            self.folders = Persistence.loadFolders()
+        }
+    }
+
+    var filteredBooks: [Book] {
+        if let selectedFolder = selectedFolder {
+            return books.filter { $0.folderId == selectedFolder.id }
+        } else {
+            return books.filter { $0.folderId == nil }
         }
     }
 
     func addBook(from url: URL) {
+        print("addBook called with URL: \(url.absoluteString)")
         // Gain access to the security-scoped resource
         guard url.startAccessingSecurityScopedResource() else {
             print("Failed to access security-scoped resource.")
@@ -61,8 +82,10 @@ class LibraryViewModel: ObservableObject {
             let appDocumentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             let destinationURL = appDocumentsDirectory.appendingPathComponent(fileName)
 
+            print("Attempting to copy file from \(url.path) to \(destinationURL.path)")
             // Copy the file from the source URL to the app's directory
             try FileManager.default.copyItem(at: url, to: destinationURL)
+            print("File copied successfully.")
             
             // Create a new book instance
             let newBook = Book(
@@ -75,6 +98,7 @@ class LibraryViewModel: ObservableObject {
 
             // Add the new book to our library
             books.append(newBook)
+            print("Book added to library: \(newBook.title)")
 
         } catch {
             print("Error copying file: \(error.localizedDescription)")
@@ -86,7 +110,7 @@ class LibraryViewModel: ObservableObject {
         OCRProcessor.shared.createSearchablePDF(from: image) { pdfData in
             guard let pdfData = pdfData else { return }
             
-            let fileName = "\(title).pdf"
+            let fileName = "\(title).pdf" 
             
             do {
                 let appDocumentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -129,6 +153,12 @@ class LibraryViewModel: ObservableObject {
             }
         } catch {
             print("Error deleting file: \(error.localizedDescription)")
+        }
+    }
+
+    func updateBook(_ book: Book) {
+        if let index = books.firstIndex(where: { $0.id == book.id }) {
+            books[index] = book
         }
     }
     
@@ -263,15 +293,25 @@ class LibraryViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Bookmarks
-    func toggleBookmark(for book: Book, page: Int) {
-        guard let index = books.firstIndex(where: { $0.id == book.id }) else { return }
-        
-        if books[index].bookmarks.contains(page) {
-            books[index].bookmarks.removeAll { $0 == page }
-        } else {
-            books[index].bookmarks.append(page)
-            books[index].bookmarks.sort() // Keep bookmarks sorted
+    // MARK: - Folder Management
+    func createFolder(with name: String) {
+        let newFolder = Folder(name: name)
+        folders.append(newFolder)
+    }
+
+    func deleteFolder(_ folder: Folder) {
+        // Unassign books from the folder
+        for book in books.filter({ $0.folderId == folder.id }) {
+            var mutableBook = book
+            mutableBook.folderId = nil
+            updateBook(mutableBook)
+        }
+        folders.removeAll { $0.id == folder.id }
+    }
+
+    func moveBook(_ book: Book, to folder: Folder?) {
+        if let index = books.firstIndex(where: { $0.id == book.id }) {
+            books[index].folderId = folder?.id
         }
     }
 }
@@ -279,7 +319,8 @@ class LibraryViewModel: ObservableObject {
 // Helper to create a safe filename
 extension String {
     func sanitizedFileName() -> String {
-        let invalidCharacters = CharacterSet(charactersIn: "\\/:*?\"<>|").union(.newlines)
+        var invalidCharacters = CharacterSet.newlines
+        invalidCharacters.insert(charactersIn: "\\/:*?\"<>|")
         return self.components(separatedBy: invalidCharacters).joined(separator: "")
     }
 }
